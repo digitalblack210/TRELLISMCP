@@ -1,6 +1,6 @@
-# TrellisMCP
+# TRELLISMCP
 
-[![CI](https://github.com/digitalblack210/TrellisMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/digitalblack210/TrellisMCP/actions/workflows/ci.yml)
+[![CI](https://github.com/digitalblack210/TRELLISMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/digitalblack210/TRELLISMCP/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![Linux or Windows with WSL 2](https://img.shields.io/badge/platform-Linux%20%7C%20WSL%202-blue.svg)
@@ -42,17 +42,17 @@ model a skeleton. The two share nothing but their shape, and either works alone.
 1. Get this repo.
 
    ```bash
-   git clone https://github.com/digitalblack210/TrellisMCP.git
+   git clone https://github.com/digitalblack210/TRELLISMCP.git
    ```
 
-   On Windows, clone it in Windows, not inside WSL: for example into `C:\TrellisMCP`. The
+   On Windows, clone it in Windows, not inside WSL: for example into `C:\TRELLISMCP`. The
    server runs in Windows and reaches into WSL by itself.
 
 2. Install TRELLIS. It needs no sudo, is safe to rerun and takes roughly 15 minutes, most of it downloads.
 
    ```bash
    bash scripts/install.sh                          # Linux, from the repo folder
-   bash /mnt/c/TrellisMCP/scripts/install.sh        # Windows: run this inside WSL
+   bash /mnt/c/TRELLISMCP/scripts/install.sh        # Windows: run this inside WSL
    ```
 
    It installs into `~/trellis` and ends with `=== INSTALL DONE ===`. The script is not
@@ -79,8 +79,8 @@ model a skeleton. The two share nothing but their shape, and either works alone.
    {
      "mcpServers": {
        "trellis": {
-         "command": "C:\\TrellisMCP\\.venv\\Scripts\\python.exe",
-         "args": ["C:\\TrellisMCP\\server.py"],
+         "command": "C:\\TRELLISMCP\\.venv\\Scripts\\python.exe",
+         "args": ["C:\\TRELLISMCP\\server.py"],
          "env": { "TRELLIS_MCP_ROOTS": "C:\\MyGame\\art" }
        }
      }
@@ -91,8 +91,8 @@ model a skeleton. The two share nothing but their shape, and either works alone.
 
    ```toml
    [mcp_servers.trellis]
-   command = "C:\\TrellisMCP\\.venv\\Scripts\\python.exe"
-   args = ["C:\\TrellisMCP\\server.py"]
+   command = "C:\\TRELLISMCP\\.venv\\Scripts\\python.exe"
+   args = ["C:\\TRELLISMCP\\server.py"]
    env = { TRELLIS_MCP_ROOTS = "C:\\MyGame\\art" }
    tool_timeout_sec = 90
    ```
