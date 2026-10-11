@@ -11,6 +11,11 @@ Give an AI agent a picture and get back a textured 3D model. This is a small
 Claude Code or Codex can make a model as one step of a larger job. Nothing is uploaded and
 there is no cost per model.
 
+![One picture of a mechanical T. rex becomes a 3D model that can be turned round](docs/picture-to-model.gif)
+
+*The picture is the only input. The model is one mesh with one texture and no skeleton;
+[UniRigMCP](https://github.com/digitalblack210/UniRigMCP) takes it from there and rigs it.*
+
 It is an unofficial wrapper. TRELLIS is the work of Microsoft Research; its code is
 MIT-licensed. This repo holds no TRELLIS code or weights: the install script fetches them.
 Check the terms of the weights and of TRELLIS's dependencies yourself before shipping anything
