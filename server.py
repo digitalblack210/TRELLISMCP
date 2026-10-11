@@ -73,6 +73,17 @@ def linux_path(path):
     return "/mnt/%s/%s" % (drive.lower(), "/".join(path.parts[1:]))
 
 
+def run_command(arguments):
+    """The command line that runs a script where TRELLIS lives.
+
+    A variable set for this server on Windows does not reach WSL by itself, so
+    TRELLIS_HOME is handed over on the command line.
+    """
+    home = os.getenv("TRELLIS_HOME", "").strip()
+    command = (["env", "TRELLIS_HOME=" + home] if home else []) + ["bash"] + arguments
+    return ["wsl.exe", "-e"] + command if ON_WINDOWS else command
+
+
 def settings(seed=None, steps=None, texture_size=None, simplify=None):
     """The numbers a job runs with, checked. steps 0 means TRELLIS's own default."""
     seed = DEFAULT_SEED if seed is None else int(seed)
@@ -206,13 +217,10 @@ def start_model(picture, seed=None, steps=None, texture_size=None, simplify=None
     job_id = "%s-%s" % (time.strftime("%Y%m%d-%H%M%S"), os.urandom(3).hex())
     folder = JOBS / job_id
     folder.mkdir(parents=True)
-    arguments = (["bash", linux_path(RUN_SCRIPT), linux_path(source), linux_path(folder), str(chosen["seed"]),
-                  str(chosen["steps"]), str(chosen["simplify"]), str(chosen["texture_size"])]
-                 + [linux_path(path) for path in more])
-    if ON_WINDOWS:
-        command, flags = ["wsl.exe", "-e"] + arguments, subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
-    else:
-        command, flags = arguments, 0
+    command = run_command([linux_path(RUN_SCRIPT), linux_path(source), linux_path(folder), str(chosen["seed"]),
+                           str(chosen["steps"]), str(chosen["simplify"]), str(chosen["texture_size"])]
+                          + [linux_path(path) for path in more])
+    flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP if ON_WINDOWS else 0
     try:
         # Detached from this server's pipes: stdout belongs to the protocol, and the job must outlive a restart.
         process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,

@@ -1,5 +1,6 @@
 # TrellisMCP
 
+[![CI](https://github.com/digitalblack210/TrellisMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/digitalblack210/TrellisMCP/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![Linux or Windows with WSL 2](https://img.shields.io/badge/platform-Linux%20%7C%20WSL%202-blue.svg)
@@ -28,35 +29,48 @@ model a skeleton. The two share nothing but their shape, and either works alone.
 
 - An NVIDIA GPU. Tested on an RTX 5060 Ti with 16 GB, where a model peaks at about 10 GB; less
   has not been tried.
-- Linux, or Windows with WSL 2 (tested on Ubuntu 24.04 under WSL).
-- About 20 GB of disk for TRELLIS and its weights. The weights download to the Hugging Face
-  cache the first time a model is made.
+- Linux, or Windows with WSL 2 (tested on Ubuntu 24.04 under WSL). On Windows the server uses
+  your default WSL distribution.
+- `git`, `curl`, `bzip2` and a C++ compiler where TRELLIS will run. Two of its parts are built
+  during the install. On Ubuntu: `sudo apt install build-essential git curl bzip2`.
+- About 19 GB of disk for TRELLIS, plus about 4 GB for its weights, which download to the
+  Hugging Face and PyTorch caches the first time a model is made.
 - Python 3.10 or newer for the server itself.
 
 ## Install
 
-1. Get this repo and install TRELLIS. On Windows run the install inside WSL; it needs no sudo
-   and is safe to rerun.
+1. Get this repo.
 
    ```bash
    git clone https://github.com/digitalblack210/TrellisMCP.git
-   cd TrellisMCP
-   bash scripts/install.sh
    ```
 
-   It installs into `~/trellis`. Set `TRELLIS_HOME` first to put it somewhere else. The script
-   is not Microsoft's `setup.sh`: that one installs a PyTorch too old for RTX 50-series cards.
-   This one uses Python 3.11, CUDA 12.8 and PyTorch 2.7.1, and pins TRELLIS to the commit it
-   was tested against.
+   On Windows, clone it in Windows, not inside WSL: for example into `C:\TrellisMCP`. The
+   server runs in Windows and reaches into WSL by itself.
 
-2. Install the server's one dependency. On Windows do this in Windows, not WSL.
+2. Install TRELLIS. It needs no sudo, is safe to rerun and takes roughly 15 minutes, most of it downloads.
+
+   ```bash
+   bash scripts/install.sh                          # Linux, from the repo folder
+   bash /mnt/c/TrellisMCP/scripts/install.sh        # Windows: run this inside WSL
+   ```
+
+   It installs into `~/trellis` and ends with `=== INSTALL DONE ===`. The script is not
+   Microsoft's `setup.sh`: that one installs a PyTorch too old for RTX 50-series cards. This
+   one uses Python 3.11, CUDA 12.8 and PyTorch 2.7.1, and pins TRELLIS to the commit it was
+   tested against.
+
+   To install somewhere else, set `TRELLIS_HOME` to a full Linux path before running the
+   script, and give the server the same `TRELLIS_HOME` in step 4.
+
+3. Install the server's one dependency. On Windows do this in Windows, not WSL.
 
    ```bash
    python -m venv .venv
    .venv/Scripts/pip install -r requirements.txt     # Linux: .venv/bin/pip
    ```
 
-3. Tell your agent about it. `TRELLIS_MCP_ROOTS` lists the folders the server may read pictures
+4. Tell your agent about it. `TRELLIS_MCP_ROOTS` lists the folders the server may read pictures
    from and save results to, separated by `;`. It refuses every other path.
 
    Claude Code, in a project's `.mcp.json`:
@@ -82,6 +96,14 @@ model a skeleton. The two share nothing but their shape, and either works alone.
    env = { TRELLIS_MCP_ROOTS = "C:\\MyGame\\art" }
    tool_timeout_sec = 90
    ```
+
+5. Restart the agent and try it. Put a picture in an allowed folder and ask, for example:
+
+   > Make a 3D model from C:\MyGamert
+obot.png and save it to C:\MyGamert\models.
+   > Show me the views picture when it is done.
+
+   The first model takes a few minutes longer than later ones, because the weights download.
 
 ## The tools
 
@@ -137,6 +159,19 @@ Measured on the RTX 5060 Ti, for the T. rex above with the default settings:
   saying so. Anything else using the GPU's memory can make a job fail.
 - **A failed job reports the end of TRELLIS's log** in `error`, so the agent can see whether it
   ran out of memory, could not read the picture, or something else.
+
+## If it does not work
+
+| What you see | What to do |
+|---|---|
+| `... is outside the folders this server may use` | Add the picture's folder to `TRELLIS_MCP_ROOTS` and restart the agent. |
+| `TRELLIS is not installed at ...` | Run `scripts/install.sh`, or set `TRELLIS_HOME` for the server to where you installed it. |
+| `Could not start TRELLIS` | On Windows, check that `wsl.exe` runs and that your default distribution is the one you installed into (`wsl -l -v`). |
+| `error` mentions `CUDA out of memory` | Close whatever else is using the GPU and start the job again. |
+| `flat_card` is true, or the model looks wrong | Start again with another `seed`. |
+| The agent does not list the tools | Check the two paths in its configuration, then restart it. |
+
+Every job keeps its full log at `jobs/<id>/<name>_trellis.log`.
 
 ## Layout
 

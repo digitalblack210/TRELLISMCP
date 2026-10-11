@@ -132,3 +132,13 @@ def test_a_second_job_is_refused_while_one_runs(roots, monkeypatch):
     picture.write_bytes(b"png")
     with pytest.raises(RuntimeError, match="still making"):
         server.start_model(str(picture))
+
+
+def test_the_install_folder_is_handed_to_the_script(monkeypatch):
+    monkeypatch.delenv("TRELLIS_HOME", raising=False)
+    plain = server.run_command(["run.sh", "a"])
+    assert plain[-3:] == ["bash", "run.sh", "a"] and not any("TRELLIS_HOME" in part for part in plain)
+    monkeypatch.setenv("TRELLIS_HOME", "/opt/tools")
+    moved = server.run_command(["run.sh", "a"])
+    assert moved[-5:] == ["env", "TRELLIS_HOME=/opt/tools", "bash", "run.sh", "a"]
+    assert (moved[:2] == ["wsl.exe", "-e"]) == server.ON_WINDOWS

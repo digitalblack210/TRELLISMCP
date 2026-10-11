@@ -6,6 +6,13 @@ set -eo pipefail
 T=${TRELLIS_HOME:-$HOME/trellis}
 # The TRELLIS commit this was tested against.
 TRELLIS_COMMIT=442aa1e1afb9014e80681d3bf604e8d728a86ee7
+missing=
+for tool in git curl bzip2 g++ nvidia-smi; do command -v "$tool" >/dev/null || missing="$missing $tool"; done
+if [ -n "$missing" ]; then
+  echo "Missing:$missing. Install them first; on Ubuntu: sudo apt install build-essential git curl bzip2"
+  echo "(nvidia-smi comes with the NVIDIA driver; under WSL it comes from the Windows driver.)"
+  exit 1
+fi
 mkdir -p "$T/bin" "$T/ext"
 cd "$T"
 stage() { echo; echo "=== STAGE: $* === $(date +%T)"; }
@@ -52,10 +59,15 @@ pip install --no-build-isolation $R
 
 stage repo
 if [ ! -d TRELLIS ]; then
-  git clone https://github.com/microsoft/TRELLIS.git
-  git -C TRELLIS checkout "$TRELLIS_COMMIT"
-  git -C TRELLIS submodule update --init --recursive
+  # Only the one commit: the full history is over a gigabyte.
+  rm -rf TRELLIS.partial
+  git init -q TRELLIS.partial
+  git -C TRELLIS.partial fetch -q --depth 1 https://github.com/microsoft/TRELLIS.git "$TRELLIS_COMMIT"
+  git -C TRELLIS.partial checkout -q FETCH_HEAD
+  git -C TRELLIS.partial submodule update -q --init --recursive --depth 1
+  mv TRELLIS.partial TRELLIS
 fi
+git -C TRELLIS rev-parse HEAD
 
 stage verify
 python - <<'EOF'
