@@ -110,6 +110,16 @@ views picture into a folder of your choosing, with a small provenance file besid
 
 ## What to expect
 
+Measured on the RTX 5060 Ti, for the T. rex above with the default settings:
+
+| Stage | Time |
+|---|---|
+| Load TRELLIS | 26 s |
+| Generate | 16 s |
+| Views picture | under 1 s |
+| Export the GLB | 19 s |
+| Whole job | 78 s, peaking at 9.8 GB of GPU memory |
+
 - **Give it one whole object, centred.** A transparent background is used as it is; otherwise
   TRELLIS removes the background itself.
 - **Look at the views picture.** It shows six camera angles, textured on top and shape only
