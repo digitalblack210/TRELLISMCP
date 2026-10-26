@@ -117,8 +117,10 @@ A normal run is one `start_model`, then `get_model` once or twice. Jobs are star
 not awaited, because a model takes longer than most clients let one tool call run.
 
 `picture` is an absolute path to a PNG, JPEG or WebP under an allowed folder. A finished job
-gives paths to the GLB, a views picture and TRELLIS's log. `save_to` copies the GLB and the
-views picture into a folder of your choosing, with a small provenance file beside them.
+gives paths to the GLB, a views picture and TRELLIS's log. `save_to` moves the GLB and the
+views picture into a folder of your choosing, such as your project's, with a small provenance
+file beside them. They are moved, not copied, so models do not pile up in the job folder; it
+keeps only the log and measurements, and later calls report the files where they now are.
 
 `start_model` also takes:
 

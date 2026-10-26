@@ -10,7 +10,7 @@ installed with scripts/install.sh.
 
 Three things keep the server in its lane:
 
-  - It reads pictures only from folders named in TRELLIS_MCP_ROOTS, and copies
+  - It reads pictures only from folders named in TRELLIS_MCP_ROOTS, and saves
     results only into those folders. An agent cannot use it to read or write
     anywhere else on the machine.
   - One model is made at a time. The GPU is the limit, not the server.
@@ -193,6 +193,12 @@ def _describe(state):
            "source_picture": state["source"], "more_pictures": state.get("more", []), "settings": state["settings"],
            "elapsed_seconds": round(end - state["created"]), "error": state.get("error")}
     out["files"] = {kind: str(path) for kind, path in _files(state).items() if path.is_file()}
+    for kind, path in state.get("saved", {}).items():
+        # A model that save_to moved into a project is reported where it now is.
+        if kind in ("glb", "views_png") and kind not in out["files"] and Path(path).is_file():
+            out["files"][kind] = path
+    if state.get("saved"):
+        out["saved"] = state["saved"]
     if state["status"] == "done":
         result = JOBS / state["id"] / (state["name"] + "_result.json")
         try:
@@ -249,15 +255,21 @@ def get_model(job_id, wait_seconds=45, save_to=None):
         saved = {}
         for kind, suffix in (("glb", ".glb"), ("views_png", "_views.png")):
             if kind in out["files"]:
-                target = folder / (state["name"] + suffix)
-                shutil.copyfile(out["files"][kind], target)
-                saved[kind] = str(target)
+                source, target = Path(out["files"][kind]).resolve(), folder / (state["name"] + suffix)
+                if source != target:
+                    shutil.copyfile(source, target)
+                    if source.parent == (JOBS / state["id"]).resolve():
+                        # Moved, not copied: the project keeps the only copy and the job folder stays small.
+                        # A copy saved earlier into another folder is left alone.
+                        source.unlink()
+                saved[kind] = out["files"][kind] = str(target)
         record = folder / (state["name"] + ".provenance.json")
         record.write_text(json.dumps({"generator": "microsoft/TRELLIS-image-large", "source_picture": state["source"],
                                       "more_pictures": state.get("more", []), "settings": state["settings"],
                                       "result": out.get("result")}, indent=2), encoding="utf-8")
         saved["provenance_json"] = str(record)
-        out["saved"] = saved
+        state["saved"] = out["saved"] = saved
+        _write_state(state)
     return out
 
 
@@ -323,7 +335,8 @@ def build_server():
         end of TRELLIS's log.
 
         save_to: optional folder under an allowed root. When the job is done, the GLB and the views picture
-            are copied there with a small provenance file beside them, and 'saved' gives their paths.
+            are moved there, not copied, with a small provenance file beside them; 'saved' gives their paths
+            and 'files' points at them from then on. The job folder keeps only its log and measurements.
         """
         return told(lambda: get_model(job_id, wait_seconds, save_to))
 

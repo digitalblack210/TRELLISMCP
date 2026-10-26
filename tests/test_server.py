@@ -117,6 +117,24 @@ def test_a_finished_job_reports_and_saves_its_files(roots, monkeypatch):
     assert record["generator"] == "microsoft/TRELLIS-image-large" and record["settings"]["seed"] == 1
 
 
+def test_saving_moves_the_model_out_of_the_job_folder(roots, monkeypatch):
+    folder = running_job()
+    (folder / "rat_s1_trellis.log").write_text("=== done 5\n")
+    (folder / "rat_s1.glb").write_bytes(b"glTF")
+    (folder / "rat_s1_views.png").write_bytes(b"png")
+    monkeypatch.setattr(server, "_process_alive", lambda pid: False)
+    server.get_model(folder.name, wait_seconds=0, save_to=str(roots / "models"))
+    assert not (folder / "rat_s1.glb").exists() and not (folder / "rat_s1_views.png").exists()
+    assert (folder / "rat_s1_trellis.log").is_file()
+    later = server.get_model(folder.name, wait_seconds=0)
+    assert Path(later["files"]["glb"]) == (roots / "models" / "rat_s1.glb").resolve()
+    assert Path(later["saved"]["views_png"]).read_bytes() == b"png"
+    # Saving again somewhere else copies from the project and leaves the first copy where it is.
+    again = server.get_model(folder.name, wait_seconds=0, save_to=str(roots / "other"))
+    assert (roots / "other" / "rat_s1.glb").read_bytes() == b"glTF" and (roots / "models" / "rat_s1.glb").is_file()
+    assert Path(again["files"]["glb"]) == (roots / "other" / "rat_s1.glb").resolve()
+
+
 def test_results_cannot_be_saved_outside_the_roots(roots, tmp_path, monkeypatch):
     folder = running_job()
     (folder / "rat_s1_trellis.log").write_text("=== done 5\n")
