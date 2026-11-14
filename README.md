@@ -175,11 +175,37 @@ Measured on the RTX 5060 Ti, for the T. rex above with the default settings:
 
 Every job keeps its full log at `jobs/<id>/<name>_trellis.log`.
 
+## Freeing disk space
+
+The install leaves behind what it downloaded and built from. Once TRELLIS works, this removes
+it, run the same way as the install script:
+
+```bash
+bash scripts/cleanup.sh                          # Linux, from the repo folder
+bash /mnt/c/TRELLISMCP/scripts/cleanup.sh        # Windows: run this inside WSL
+```
+
+It empties pip's and micromamba's download caches and deletes the sources nvdiffrast and
+mip-splatting were built from. The environment, TRELLIS and the weights stay, and
+`scripts/install.sh` fetches the rest again if it is ever rerun. Add `--jobs` to also delete
+the folder of every job that is not running: its log, and its model if `save_to` never moved it.
+
+Under WSL, space freed inside Linux does not return to Windows by itself. Afterwards, in
+PowerShell, with your distribution's name from `wsl -l`:
+
+```powershell
+wsl --shutdown
+wsl --manage Ubuntu --set-sparse true
+```
+
+That needs a recent WSL; `wsl --update` gets one.
+
 ## Layout
 
 ```
 server.py             the MCP server; also importable for tests
 scripts/install.sh    TRELLIS install for RTX 50-series cards
+scripts/cleanup.sh    frees the space the install no longer needs
 scripts/generate.sh   one picture to one model; sets up TRELLIS's environment
 scripts/generate.py   the TRELLIS calls, run with TRELLIS's own Python
 tests/                run with: python -m pytest
